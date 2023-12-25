@@ -54,7 +54,7 @@ export const logoutUser = () => {
     });
 };
 
-export const addNote = async (data) => {
+export const addOrder = async (data) => {
   try {
     // Ambil data yg sudah login dari fungsi 'getData'
     const userData = await getData("user");
@@ -67,10 +67,10 @@ export const addNote = async (data) => {
       };
 
       await FIREBASE.database()
-        .ref("notes/" + userData.uid)
+        .ref("orders/" + userData.uid)
         .push(dataBaru);
 
-      console.log("Note added successfully");
+      console.log("Order added successfully");
     } else {
       Alert.alert("Error", "Login Terlebih Dahulu");
     }
@@ -79,51 +79,74 @@ export const addNote = async (data) => {
   }
 };
 
-export const getNote = async () => {
-  const userData = await getData("user");
-  const notesRef = FIREBASE.database().ref("notes/" + userData.uid);
+export const uploadImage = async (imageFile, imageName) => {
+  try {
+    const userData = await getData("user");
 
-  return notesRef
+    if (!userData) {
+      throw new Error("User data not found");
+    }
+
+    const storageRef = FIREBASE.storage().ref();
+    const imageRef = storageRef.child(`images/${userData.uid}/${imageName}`);
+
+    await imageRef.put(imageFile);
+    console.log("Image uploaded successfully");
+    
+    // Mengambil URL gambar yang diunggah
+    const imageUrl = await imageRef.getDownloadURL();
+    return imageUrl;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw error;
+  }
+};
+
+export const getOrder = async () => {
+  const userData = await getData("user");
+  const orderRef = FIREBASE.database().ref("orders/" + userData.uid);
+
+  return orderRef
     .once("value")
     .then((snapshot) => {
-      const notesData = snapshot.val();
-      if (notesData) {
-        const notesArray = Object.entries(notesData).map(([noteId, noteData]) => ({
-          noteId,
-          ...noteData,
+      const orderData = snapshot.val();
+      if (orderData) {
+        const orderArray = Object.entries(orderData).map(([orderId, orderData]) => ({
+          orderId,
+          ...orderData,
         }));
-        return notesArray;
+        return orderArray;
       } else {
         return [];
       }
     })
     .catch((error) => {
-      console.error("Error fetching user notes:", error);
+      console.error("Error fetching user Order:", error);
       return [];
     });
 };
 
-export const editNote = async (noteId, updatedData) => {
+export const editOrder = async (orderId, updatedData) => {
   try {
     // Ambil data pengguna yang sudah login dari fungsi 'getData'
     const userData = await getData("user");
 
     if (userData) {
       // Perbarui catatan berdasarkan noteId
-      const noteRef = FIREBASE.database().ref(`notes/${userData.uid}/${noteId}`);
+      const noteRef = FIREBASE.database().ref(`orders/${userData.uid}/${orderId}`);
       const snapshot = await noteRef.once("value");
-      const existingNote = snapshot.val();
+      const existingOrder = snapshot.val();
 
-      if (existingNote) {
-        const updatedNote = {
-          ...existingNote,
+      if (existingOrder) {
+        const updatedOrder = {
+          ...existingOrder,
           ...updatedData,
         };
 
-        await noteRef.update(updatedNote);
-        console.log("Note updated successfully");
+        await noteRef.update(updatedOrder);
+        console.log("Order updated successfully");
       } else {
-        console.log("Note not found");
+        console.log("Order not found");
       }
     } else {
       Alert.alert("Error", "Login Terlebih Dahulu");
