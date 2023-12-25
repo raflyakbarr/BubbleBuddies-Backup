@@ -96,6 +96,12 @@ const Register =() => {
                         value={username}
                         onChangeText={(username) => setUsername(username)}
                         placeholder="Enter Your Username"/>
+                        <FormControl.Label>Email</FormControl.Label>
+                        <Input
+                        value={email}
+                        onChangeText={(email) => setEmail(email)}
+                        placeholder="Enter Your Email"
+                        w={"full"}/>
                     <FormControl.Label>Password</FormControl.Label>
                         <Input
                         value={password}
@@ -107,12 +113,7 @@ const Register =() => {
                             Password should be at least 6 characters long.
                         </Text>
                         )}
-                    <FormControl.Label>Email</FormControl.Label>
-                        <Input
-                        value={email}
-                        onChangeText={(email) => setEmail(email)}
-                        placeholder="Enter Your Email"
-                        w={"full"}/>
+
                     <FormControl.Label>No Telp</FormControl.Label>
                         <Input
                         value={telp}
