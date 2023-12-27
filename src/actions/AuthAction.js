@@ -81,21 +81,37 @@ export const addOrder = async (data) => {
 
 export const uploadImage = async (imageFile, imageName) => {
   try {
-    const userData = await getData("user");
-
-    if (!userData) {
-      throw new Error("User data not found");
-    }
+    const metadata = {
+      contentType: 'image/jpeg'
+    };
 
     const storageRef = FIREBASE.storage().ref();
-    const imageRef = storageRef.child(`images/${userData.uid}/${imageName}`);
+    const imageRef = storageRef.child(`images/${imageName}`);
 
-    await imageRef.put(imageFile);
-    console.log("Image uploaded successfully");
-    
-    // Mengambil URL gambar yang diunggah
-    const imageUrl = await imageRef.getDownloadURL();
-    return imageUrl;
+    const uploadTask = imageRef.put(imageFile, metadata);
+
+    return new Promise((resolve, reject) => {
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          // ... handler untuk progress
+        },
+        (error) => {
+          // ... handler untuk error
+          console.error("Error uploading image:", error);
+          reject(error);
+        },
+        async () => {
+          try {
+            const imageUrl = await imageRef.getDownloadURL();
+            console.log('File available at', imageUrl);
+            resolve(imageUrl);
+          } catch (error) {
+            console.error("Error getting download URL:", error);
+            reject(error);
+          }
+        }
+      );
+    });
   } catch (error) {
     console.error("Error uploading image:", error);
     throw error;

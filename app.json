@@ -1,25 +1,33 @@
 {
   "expo": {
-    "name": "bubblebuddies",
+    "name": "BubbleBuddies",
     "slug": "bubblebuddies",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/jacket.png",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.raflyakbarr.BubbleBuddies"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/laundry1.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.raflyakbarr.BubbleBuddies"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "22f54557-679a-4781-8b0e-3c887ac84009"
+      }
+    },
+    "owner": "raflyakbarr"
   }
 }

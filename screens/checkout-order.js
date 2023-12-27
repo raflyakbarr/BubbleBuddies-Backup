@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Feather } from '@expo/vector-icons'; 
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { addOrder, getOrder } from "../src/actions/AuthAction";
+import { addOrder, getOrder, uploadImage } from "../src/actions/AuthAction";
 
 const CheckoutOrder = ({ route }) => {
     const navigation = useNavigation();
@@ -145,7 +145,31 @@ const CheckoutOrder = ({ route }) => {
             return { ...prevOrderData, products: updatedProducts };
         });
     };
+const onUploadImage = async (imageFile, imageName) => {
+  try {
+    const imageUrl = await uploadImage(imageFile, imageName);
+    // Lakukan apapun yang diperlukan dengan URL gambar yang diunggah
+    console.log('Uploaded image URL:', imageUrl);
+    return imageUrl;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
+};
 
+// Gunakan di dalam komponen React
+const handleImageUpload = async () => {
+  try {
+    const response = await fetch(imageUri); // Ambil file dari URI
+    const blob = await response.blob(); // Konversi response menjadi Blob
+
+    const imageName = imageUri.split('/').pop(); // Ambil nama file dari URI
+    const imageUrl = await onUploadImage(blob, imageName);
+    // Lakukan sesuatu dengan URL yang diunggah jika diperlukan
+  } catch (error) {
+    console.error('Error handling image upload:', error);
+  }
+};
 
     return (
         <>

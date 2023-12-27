@@ -5,7 +5,7 @@ import { NativeBaseProvider, Text } from "native-base";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Home from "./screens/home";
 import Profile from "./screens/profile";
-import Order from "./screens/orders";
+import Orders from "./screens/orders";
 import DetailProfile from "./screens/detail-profile";
 import AboutUs from "./screens/about-us";
 import AddService from "./screens/add-service";
@@ -30,46 +30,50 @@ const noHead = { headerShown: false };
 
 const Tabs = () => {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: () => {
-          let iconName;
-          switch (route.name) {
-            case "Home":
-              iconName = "home-outline";
-              break;
-            case "Order":
-              iconName = "reader-outline";
-              break;
-            case "Profile":
-              iconName = "person-circle-outline";
-              break;
-          }
-          return (
-            <Ionicons
-              name={iconName}
-              size={28}
-              color={"white"}
-            />
-          );
-        },
-        tabBarIconStyle: { marginTop: 5 },
-        tabBarStyle: {
-          height: 70,
-          borderTopWidth: 0,
-          backgroundColor: "#82a9f4",
-        },
-        tabBarLabel: ({ children }) => {
-          return (
-            <Text color={"white"} mb={2}>
-              {children}
-            </Text>
-          );
-        },
-      })}
-    >
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName;
+            switch (route.name) {
+              case "Home":
+                iconName = focused ? "home" : "home-outline";
+                break;
+              case "Orders":
+                iconName = focused ? "reader" : "reader-outline";
+                break;
+              case "Profile":
+                iconName = focused ? "person-circle" : "person-circle-outline";
+                break;
+              default:
+                iconName = "home";
+                break;
+            }
+            return (
+              <Ionicons
+                name={iconName}
+                size={size}
+                color={focused ? "white" : "white"}
+                style={{ opacity: focused ? 1 : 1}} 
+              />
+            );
+          },
+          tabBarIconStyle: { marginTop: 5 },
+          tabBarStyle: {
+            height: 70,
+            borderTopWidth: 0,
+            backgroundColor: "#82a9f4",
+          },
+          tabBarLabel: ({ children }) => {
+            return (
+              <Text color={"white"} mb={2}>
+                {children}
+              </Text>
+            );
+          },
+        })}
+      >
       <Tab.Screen name="Home" component={Home} options={noHead} />
-      <Tab.Screen name="Order" component={Order} options={noHead} />
+      <Tab.Screen name="Orders" component={Orders} options={noHead} />
       <Tab.Screen name="Profile" component={Profile} options={noHead} />
     </Tab.Navigator>
   );
@@ -96,7 +100,6 @@ const App = () => {
           <Stack.Screen name="DetailOrder" component={DetailOrder} options={noHead} />
           <Stack.Screen name="ListImage" component={ListImage} options={noHead} />
           <Stack.Screen name="Splash" component={Splash} options={noHead} />
-
         </Stack.Navigator>
       </NavigationContainer>
     </NativeBaseProvider>
