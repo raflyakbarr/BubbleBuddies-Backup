@@ -172,7 +172,7 @@ const Orders = () => {
         {loading ? (
           <ActivityIndicator size="large" color="#0000ff" />
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false} >
+          <ScrollView marginBottom={350} showsVerticalScrollIndicator={false} >
             {orderData
               .filter((orderItem) => orderItem.status === 0)
               .map((orderItem, orderIndex) => {

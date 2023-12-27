@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { Box, VStack, HStack, Center, ScrollView, Image, Text } from 'native-base';
 import { Header } from '../components';
-import { getOrder } from '../src/actions/AuthAction';
+import { getOrder, getImage } from '../src/actions/AuthAction';
 
 
 const ListImage = ({ route }) => {
@@ -26,7 +26,25 @@ const ListImage = ({ route }) => {
 
     fetchOrderData();
   }, [orderId]);
+  const [imageUrls, setImageUrls] = useState([]);
 
+
+  useEffect(() => {
+    // Panggil getImage untuk setiap nama file gambar yang ada di dalam evidences
+    const fetchImages = async () => {
+      try {
+        const urls = await Promise.all(evidences.map(async (evidence) => {
+          const url = await getImage(evidence);
+          return url;
+        }));
+        setImageUrls(urls);
+      } catch (error) {
+        console.error('Error fetching images:', error);
+      }
+    };
+
+    fetchImages();
+  }, [evidences]);
   return (
     <>
       <Box bg="#82a9f4">
@@ -34,32 +52,22 @@ const ListImage = ({ route }) => {
           <Header withBack="true" title={'Detail Image'} />
         </Box>
       </Box>
+     
       <ScrollView vertical={true} showsVerticalScrollIndicator={false}>
-      <Box>
-    </Box>
-        <VStack mb={10} mt={10} space={30} justifyContent="center" alignItems="center">
-          <HStack space={30}>
-            <Center h="40" w="40" bg="muted.300" rounded="md" shadow={3}>
-              <Box>
-              </Box>
-              <Text>
-                {orderId}
-              </Text>
-              {evidences.map((evidence, index) => (
-            <Text key={index}>
-              Evidence {index + 1}: {evidence}
-            </Text>
-          ))}
-              <Text>
-                {orderNumber}
-              </Text>              
-            </Center>
-            <Center h="40" w="40" bg="muted.300" rounded="md" shadow={3}>
-              Gambar 2
-            </Center>
-          </HStack>
-        </VStack>
+      {imageUrls.map((url, index) => (
+        <Box key={index} backgroundColor={"muted.300"} width={350} height={350} alignSelf={"center"} marginTop={10} borderRadius={5}>
+          <Box mb={10} mt={10} space={30} justifyContent="center" alignItems="center" >          
+                <Image
+                alt='nama gambarrrr'
+                  key={index}
+                  source={{ uri: url }}
+                  style={{ width: 300, height: 300 }} // Sesuaikan ukuran sesuai kebutuhan
+                />
+          </Box>          
+        </Box>  
+        ))}
       </ScrollView>
+      
     </>
   );
 };

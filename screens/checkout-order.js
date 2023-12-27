@@ -61,10 +61,14 @@ const CheckoutOrder = ({ route }) => {
                 }
     
                 // Menambahkan evidences ke dalam orderData sebelum mengirimkan
-                validProducts.forEach((product, index) => {
-                    product.evidence = validProducts[index].evidence;
+                validProducts.forEach(product => {
+                    if (product.evidence && product.evidence.length > 0) {
+                        product.evidence = product.evidence.map(evidence => {
+                            const uriParts = evidence.split('/'); // Memecah URI menjadi bagian-bagian yang terpisah
+                            return uriParts.pop(); // Mengambil elemen terakhir dari URI evidence
+                        });
+                    }
                 });
-    
                 // Mendapatkan tanggal saat ini
                 const currentDate = new Date();
     
@@ -85,9 +89,24 @@ const CheckoutOrder = ({ route }) => {
                 orderData.status = 0;
                 orderData.total = calculateTotal(validProducts); // Menggunakan calculateTotal untuk total produk yang valid
     
+             
+    
                 await addOrder({ ...orderData, products: validProducts });
                 navigation.replace("SuccesOrder");
                 console.log({ ...orderData, products: validProducts });
+                if (imageUri) {
+                    const response = await fetch(imageUri);
+                    const blob = await response.blob();
+                    const imageName = imageUri.split('/').pop();
+                    const imageUrl = await onUploadImage(blob, imageName);
+                    // Lakukan sesuatu dengan URL yang diunggah jika diperlukan
+    
+                    // Jika Anda ingin menyimpan URL gambar ke dalam data order sebelum dikirim,
+                    // Anda bisa menyimpannya di sini
+                    // Misalnya:
+                    orderData.imageUrl = imageUrl;
+                }
+    
             } else {
                 Alert.alert('Error', 'No order data found');
             }
@@ -96,7 +115,6 @@ const CheckoutOrder = ({ route }) => {
             Alert.alert('Error', 'Failed to send order data to Firebase');
         }
     };
-
     const handleAddImage = (productIndex, selectedImageUri) => {
         setOrderData((prevOrderData) => {
             const updatedProducts = [...prevOrderData.products];
@@ -145,32 +163,31 @@ const CheckoutOrder = ({ route }) => {
             return { ...prevOrderData, products: updatedProducts };
         });
     };
-const onUploadImage = async (imageFile, imageName) => {
-  try {
-    const imageUrl = await uploadImage(imageFile, imageName);
-    // Lakukan apapun yang diperlukan dengan URL gambar yang diunggah
-    console.log('Uploaded image URL:', imageUrl);
-    return imageUrl;
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    throw error;
-  }
-};
-
-// Gunakan di dalam komponen React
-const handleImageUpload = async () => {
-  try {
-    const response = await fetch(imageUri); // Ambil file dari URI
-    const blob = await response.blob(); // Konversi response menjadi Blob
-
-    const imageName = imageUri.split('/').pop(); // Ambil nama file dari URI
-    const imageUrl = await onUploadImage(blob, imageName);
-    // Lakukan sesuatu dengan URL yang diunggah jika diperlukan
-  } catch (error) {
-    console.error('Error handling image upload:', error);
-  }
-};
-
+    const onUploadImage = async (imageFile, imageName) => {
+        try {
+          const imageUrl = await uploadImage(imageFile, imageName);
+          // Lakukan apapun yang diperlukan dengan URL gambar yang diunggah
+          console.log('Uploaded image URL:', imageUrl);
+          return imageUrl;
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          throw error;
+        }
+      };
+      
+      // Gunakan di dalam komponen React
+      const handleImageUpload = async () => {
+        try {
+          const response = await fetch(imageUri); // Ambil file dari URI
+          const blob = await response.blob(); // Konversi response menjadi Blob
+      
+          const imageName = imageUri.split('/').pop(); // Ambil nama file dari URI
+          const imageUrl = await onUploadImage(blob, imageName);
+          // Lakukan sesuatu dengan URL yang diunggah jika diperlukan
+        } catch (error) {
+          console.error('Error handling image upload:', error);
+        }
+      };
     return (
         <>
             <SafeAreaView>
