@@ -42,14 +42,10 @@ const AddImage = () => {
     };
 
     if (photo) {
-        let sharePic = () => {
-        shareAsync(photo.uri).then(() => {
-            setPhoto(undefined);
-        });
-        };
-
         let savePhoto = () => {
         MediaLibrary.saveToLibraryAsync(photo.uri).then(() => {
+            navigation.navigate('CheckoutOrder', { selectedPhoto: photo.uri });
+            console.log(photo.uri)
             setPhoto(undefined);
         });
         };
@@ -62,9 +58,8 @@ const AddImage = () => {
                         style={{alignSelf: 'stretch', height: 500,}}
                         source={{ uri: "data:image/jpg;base64," + photo.base64 }} 
                     />
-                <Button color={"white"} title="Share" onPress={sharePic} />
-                    {hasMediaLibraryPermission ? 
-                    <Button color={"white"} title="Save" onPress={savePhoto} /> : undefined}
+                {hasMediaLibraryPermission ? 
+                <Button color={"white"} title="Save" onPress={savePhoto} /> : undefined}
                 <Button color={"white"} title="Discard" onPress={() => setPhoto(undefined)} />
             </Box>
             </>

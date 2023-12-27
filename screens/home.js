@@ -1,8 +1,8 @@
 import { Heading, Box, ScrollView, Image, HStack, Text, FlatList } from "native-base";
 import { useNavigation } from "@react-navigation/native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons/";
-import { SafeAreaView, TouchableOpacity, View, RefreshControl } from "react-native";
+import { SafeAreaView, TouchableOpacity, View, RefreshControl, Animated } from "react-native";
 import { getData } from "../src/utils/localStorage";
 import { getOrder } from "../src/actions/AuthAction";
 
@@ -58,10 +58,27 @@ const Home = () => {
     // Membersihkan interval saat komponen tidak lagi digunakan
     return () => clearInterval(interval);
   }, []);
-  
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: false }
+  );
+
+  const headerHeight = scrollY.interpolate({
+    inputRange: [100, 500],
+    outputRange: [350, 165],
+    extrapolate: 'clamp',
+  });
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.6],
+    extrapolate: 'clamp',});
   return (
     <>
       <SafeAreaView>
+      <Animated.View style={{ height: headerHeight, opacity: headerOpacity }}>
         <Box py={"4"} bg="#82a9f4">
           <Box py={"4"} mr={"10"} ml={"10"}>
             <Heading
@@ -73,8 +90,8 @@ const Home = () => {
             >
               Welcome Back,{"\n"}{profile?.username}
             </Heading>
-          </Box>
-              
+          </Box>      
+                  
           <Box py={"7"} pb={"20"}>
             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
             <Box w={170} bgColor="white" p={"3"} borderRadius={"10"} shadow="2" ml={10}>
@@ -120,8 +137,11 @@ const Home = () => {
             </ScrollView>
           </Box>
         </Box>
+        </Animated.View>
+
+
         <Box py={"5"} bg="#f6f6f6" w={"full"} borderRadius={"40"} top={"-40"} pt={"5"} pl={"10"} pr={"10"} pb={"5"} mb={"40"}>
-          <Box flexDirection="row" mt={5}>
+        <Box flexDirection="row" mt={5}>
             <Heading  fontSize={30}>
               My Orders
             </Heading>
@@ -131,7 +151,12 @@ const Home = () => {
               <Ionicons name="add-circle" size={40} color="#82a9f4" />
             </TouchableOpacity>
           </Box>
-          <ScrollView vertical={true} showsVerticalScrollIndicator={false}>
+        <Animated.ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={10}
+        showsVerticalScrollIndicator={false}
+      >
+          
             {orderData.map((orderItem, orderIndex) => {
               let serviceImage = '';
 
@@ -168,8 +193,10 @@ const Home = () => {
                 </Box>
               );
             })}
-          </ScrollView>
+            </Animated.ScrollView>
         </Box>
+        
+        
       </SafeAreaView>
     </>
   );
