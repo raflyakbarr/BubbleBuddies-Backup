@@ -79,6 +79,20 @@ export const addOrder = async (data) => {
   }
 };
 
+export const getImage = async (imageName) => {
+  try {
+    const storageRef = FIREBASE.storage().ref();
+    const imageRef = storageRef.child(`images/${imageName}`);
+
+    const imageUrl = await imageRef.getDownloadURL();
+    console.log('File available at', imageUrl);
+    return imageUrl;
+  } catch (error) {
+    console.error('Error getting image:', error);
+    throw error;
+  }
+};
+
 export const uploadImage = async (imageFile, imageName) => {
   try {
     const metadata = {
@@ -92,14 +106,18 @@ export const uploadImage = async (imageFile, imageName) => {
 
     return new Promise((resolve, reject) => {
       uploadTask.on('state_changed',
-        (snapshot) => {
-          // ... handler untuk progress
-        },
-        (error) => {
-          // ... handler untuk error
-          console.error("Error uploading image:", error);
-          reject(error);
-        },
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log('Upload is ' + progress + '% done');
+        switch (snapshot.state) {
+          case 'paused':
+            console.log('Upload is paused');
+            break;
+          case 'running':
+            console.log('Upload is running');
+            break;
+        }
+      },
         async () => {
           try {
             const imageUrl = await imageRef.getDownloadURL();
