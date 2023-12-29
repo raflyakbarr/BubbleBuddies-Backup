@@ -93,7 +93,7 @@ export const getImage = async (imageName) => {
   }
 };
 
-export const uploadImage = async (imageUri, imageName) => {
+export const uploadImage = async (imageUri) => {
   try {
     const response = await fetch(imageUri);
     const blob = await response.blob();
@@ -102,8 +102,10 @@ export const uploadImage = async (imageUri, imageName) => {
       contentType: 'image/jpeg'
     };
 
+    // Dapatkan nama file dari URI gambar
+    const filename = imageUri.split('/').pop();
     const storageRef = FIREBASE.storage().ref();
-    const imageRef = storageRef.child(`images/${imageName}`);
+    const imageRef = storageRef.child(`images/${filename}`);
 
     const uploadTaskSnapshot = await imageRef.put(blob, metadata);
     const downloadURL = await uploadTaskSnapshot.ref.getDownloadURL();
