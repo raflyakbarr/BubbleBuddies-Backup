@@ -65,10 +65,10 @@ const CheckoutOrder = ({ route }) => {
                 if (imageUri && Array.isArray(imageUri) && imageUri.length > 0) {
                     setUploading(true);
                     const uploadedImageUrls = await Promise.all(
-                      imageUri.map(async (item, index) => {
+                      imageUri.map(async (item) => {
                         try {
-                          const imageUrl = await uploadImage(item.uri, `image_${index}`);
-                          return imageUrl;                         
+                          const imageUrl = await uploadImage(item.uri);
+                          return imageUrl;
                         } catch (error) {
                           console.error('Error uploading image:', error);
                           return null;
