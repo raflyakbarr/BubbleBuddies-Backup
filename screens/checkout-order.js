@@ -1,6 +1,6 @@
-import { Heading, Box, Image, HStack, Text, Button, ScrollView } from "native-base";
+import { Heading, Box, Image, HStack, Text, Button, ScrollView, FlatList, Spinner } from "native-base";
 import { Header } from "../components";
-import { SafeAreaView, TouchableOpacity, View, Alert } from "react-native";
+import { SafeAreaView, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
 import { useState, useEffect } from "react";
 import { Feather } from '@expo/vector-icons'; 
 import { useNavigation } from "@react-navigation/native";
@@ -8,10 +8,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { addOrder, getOrder, uploadImage } from "../src/actions/AuthAction";
 
 const CheckoutOrder = ({ route }) => {
+    const imageUri = route.params && route.params.photos;
     const navigation = useNavigation();
-    const imageUri = route.params && route.params.selectedPhoto;
-    console.log(imageUri)
     const [orderData, setOrderData] = useState(null);
+    const [uploading, setUploading] = useState(false);
     useEffect(() => {
         const fetchOrderData = async () => {
             try {
@@ -22,6 +22,7 @@ const CheckoutOrder = ({ route }) => {
                     // Filter produk dengan quantity lebih dari 0
                     const filteredProducts = parsedData.products.filter(product => product.quantity > 0);
                     setValidProducts(filteredProducts);
+                    
                 }
             } catch (error) {
                 console.error('Error fetching order data:', error);
@@ -53,60 +54,50 @@ const CheckoutOrder = ({ route }) => {
         try {
             if (orderData) {
                 // Filter produk dengan quantity lebih dari 0
-                const validProducts = orderData.products.filter(product => product.quantity > 0);
-    
+                const validProducts = orderData.products.filter(product => product.quantity > 0);    
                 if (validProducts.length === 0) {
                     Alert.alert('Error', 'No products to order');
                     return;
                 }
-    
-                // Menambahkan evidences ke dalam orderData sebelum mengirimkan
-                validProducts.forEach(product => {
-                    if (product.evidence && product.evidence.length > 0) {
-                        product.evidence = product.evidence.map(evidence => {
-                            const uriParts = evidence.split('/'); // Memecah URI menjadi bagian-bagian yang terpisah
-                            return uriParts.pop(); // Mengambil elemen terakhir dari URI evidence
-                        });
-                    }
-                });
                 // Mendapatkan tanggal saat ini
-                const currentDate = new Date();
+                const currentDate = new Date();        
+                // Menambahkan URL gambar ke dalam properti evidence pada orderData
+                if (imageUri && Array.isArray(imageUri) && imageUri.length > 0) {
+                    setUploading(true);
+                    const uploadedImageUrls = await Promise.all(
+                      imageUri.map(async (item, index) => {
+                        try {
+                          const imageUrl = await uploadImage(item.uri, `image_${index}`);
+                          return imageUrl;                         
+                        } catch (error) {
+                          console.error('Error uploading image:', error);
+                          return null;
+                        }
+                      })
+                    );
+            
+                    orderData.evidence = uploadedImageUrls.filter(url => url !== null);
+                    setUploading(false);
+                  }
     
+                // Simpan orderData yang diperbarui ke dalam AsyncStorage dengan key orderData
+                await AsyncStorage.setItem('orderData', JSON.stringify(orderData));    
                 // Mendefinisikan objek date dengan informasi hari, bulan, dan tahun
                 const formattedDate = `${currentDate.getDate()} ${
                     currentDate.toLocaleString('default', { month: 'long' })
-                } ${currentDate.getFullYear()}`;
-    
+                } ${currentDate.getFullYear()}`;   
                 // Menambahkan informasi tanggal, bulan, dan tahun ke dalam properti date
-                orderData.date = formattedDate;
-    
+                orderData.date = formattedDate;   
                 // Mengambil order sebelumnya dari Firebase
                 const previousOrders = await getOrder();
-                const orderNumber = previousOrders.length + 1;
-    
+                const orderNumber = previousOrders.length + 1;    
                 // Menambahkan properti orderNumber dengan nomor urutan berikutnya
                 orderData.orderNumber = orderNumber;
                 orderData.status = 0;
-                orderData.total = calculateTotal(validProducts); // Menggunakan calculateTotal untuk total produk yang valid
-    
-             
-    
+                orderData.total = calculateTotal(validProducts); // Menggunakan calculateTotal untuk total produk yang valid   
                 await addOrder({ ...orderData, products: validProducts });
                 navigation.replace("SuccesOrder");
                 console.log({ ...orderData, products: validProducts });
-                if (imageUri) {
-                    const response = await fetch(imageUri);
-                    const blob = await response.blob();
-                    const imageName = imageUri.split('/').pop();
-                    const imageUrl = await onUploadImage(blob, imageName);
-                    // Lakukan sesuatu dengan URL yang diunggah jika diperlukan
-    
-                    // Jika Anda ingin menyimpan URL gambar ke dalam data order sebelum dikirim,
-                    // Anda bisa menyimpannya di sini
-                    // Misalnya:
-                    orderData.imageUrl = imageUrl;
-                }
-    
             } else {
                 Alert.alert('Error', 'No order data found');
             }
@@ -115,34 +106,7 @@ const CheckoutOrder = ({ route }) => {
             Alert.alert('Error', 'Failed to send order data to Firebase');
         }
     };
-    const handleAddImage = (productIndex, selectedImageUri) => {
-        setOrderData((prevOrderData) => {
-            const updatedProducts = [...prevOrderData.products];
-            const productToUpdate = updatedProducts[productIndex];
-    
-            // Buat salinan evidence yang ada atau array kosong jika belum ada
-            const updatedEvidence = productToUpdate.evidence ? [...productToUpdate.evidence] : [];
-    
-            // Tambahkan URL gambar baru ke evidence produk yang dipilih
-            updatedEvidence.push(selectedImageUri);
-    
-            // Perbarui produk dengan evidence baru
-            updatedProducts[productIndex] = {
-                ...productToUpdate,
-                evidence: updatedEvidence,
-            };
-    
-            // Kembalikan data order dengan produk yang diperbarui
-            return { ...prevOrderData, products: updatedProducts };
-        });
-    };
-    const handleRemoveImage = (productIndex, evidenceIndex) => {
-        setOrderData((prevOrderData) => {
-            const updatedProducts = [...prevOrderData.products];
-            updatedProducts[productIndex].evidence.splice(evidenceIndex, 1);
-            return { ...prevOrderData, products: updatedProducts };
-        });
-    };
+
 
     const handleIncrement = (productIndex) => {
         setOrderData((prevOrderData) => {
@@ -163,31 +127,15 @@ const CheckoutOrder = ({ route }) => {
             return { ...prevOrderData, products: updatedProducts };
         });
     };
-    const onUploadImage = async (imageFile, imageName) => {
-        try {
-          const imageUrl = await uploadImage(imageFile, imageName);
-          // Lakukan apapun yang diperlukan dengan URL gambar yang diunggah
-          console.log('Uploaded image URL:', imageUrl);
-          return imageUrl;
-        } catch (error) {
-          console.error('Error uploading image:', error);
-          throw error;
-        }
-      };
-      
-      // Gunakan di dalam komponen React
-      const handleImageUpload = async () => {
-        try {
-          const response = await fetch(imageUri); // Ambil file dari URI
-          const blob = await response.blob(); // Konversi response menjadi Blob
-      
-          const imageName = imageUri.split('/').pop(); // Ambil nama file dari URI
-          const imageUrl = await onUploadImage(blob, imageName);
-          // Lakukan sesuatu dengan URL yang diunggah jika diperlukan
-        } catch (error) {
-          console.error('Error handling image upload:', error);
-        }
-      };
+    const renderItem = ({ item }) => (
+
+                <View>
+                    <Image alt="gambar" source={{ uri: item.uri }} style={{ width: 100, height: 100 }} />
+                </View>
+
+    );
+    
+
     return (
         <>
             <SafeAreaView>
@@ -225,46 +173,42 @@ const CheckoutOrder = ({ route }) => {
                                                 </TouchableOpacity>
                                             </HStack>
                                         </Box>
-                                            <TouchableOpacity onPress={() => {
-                                                navigation.navigate('AddImage');
-                                                handleAddImage(index, imageUri);
-                                            }} >
-                                                <Text pl={7} pt={2}>Add Image</Text>
-                                            </TouchableOpacity>
                                         </Box>
                                     </HStack>
-                                    <Box>
-                                        <ScrollView horizontal={true} >
-                                        <HStack space={3}>
-                                        {product.evidence.length > 0 ? (
-                                        product.evidence.map((evidenceUrl, evidenceIndex) => (
-                                            <Box key={evidenceIndex} marginBottom={2}>
-                                            <HStack space={3}>
-                                                <Image
-                                                source={{ uri: evidenceUrl }}
-                                                style={{ width: 70, height: 70, marginTop: 2 }}
-                                                alt={`Selected Image ${evidenceIndex}`}
-                                                />
-
-                                            </HStack>
-                                            <TouchableOpacity onPress={() => handleRemoveImage(index, evidenceIndex)}>
-                                                <Text alignSelf={"center"} >
-                                                    Hapus
-                                                </Text>
-                                            </TouchableOpacity>
-                                            </Box>
-                                            
-                                        ))
-                                        ) : (
-                                        <Box>
-                                            <Text>No selected photo</Text>
-                                        </Box>
-                                        )}
-                                        </HStack>
-                                        </ScrollView>
-                                    </Box>
                                 </Box>
                                  ))}
+                                 
+                                 <View style={{ flex: 1 }}>
+                                    {imageUri && imageUri.length > 0 ? (
+                                    <View style={{ flex: 1 }}>
+                                        <FlatList
+                                        data={imageUri}
+                                        renderItem={renderItem}
+                                        keyExtractor={(item, index) => index.toString()}
+                                        horizontal={true} 
+                                        contentContainerStyle={{ paddingVertical: 20 }}
+                                        ItemSeparatorComponent={() => <View style={{ width: 10 }} />}
+                                        />
+                                    </View>
+                                    ) : (
+                                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                                        <Text>No selected photo</Text>
+                                    </View>
+                                    )}
+                                    </View>
+                                    <Box>
+                                        <Button bg="#82a9f4" onPress={() => {
+                                            navigation.navigate('AddImage'); // Sending the product ID to the AddImage screen
+                                        }}>
+                                            Add photo
+                                        </Button>
+                                    </Box>
+                                {uploading && <HStack marginTop={2} space={2} justifyContent="center">
+                                <Spinner color="#82a9f4" accessibilityLabel="Loading posts" />
+                                <Heading color="#82a9f4" fontSize="lg">
+                                    Uploading
+                                </Heading>
+                                </HStack> }
                                 <Box borderWidth={0.5} mt={10} p={5} borderRadius={15} borderColor={"black"}>
                                     <Text fontSize={16} fontWeight={"bold"} pb={3} style={{ flexDirection: 'row', justifyContent: 'space-between',  marginLeft: 11,marginRight: 11 }}>
                                         Detail Pembayaran

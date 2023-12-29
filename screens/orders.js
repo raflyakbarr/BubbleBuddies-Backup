@@ -57,37 +57,6 @@ const Orders = () => {
     fetchData();
   }, []);
 
-  const calculateTotalHarga = (order) => {
-    if (!order || !order.barang || order.barang.length === 0) {
-      return 0;
-    }
-
-    return order.barang.reduce((total, item) => {
-      const harga = parseFloat(item.harga);
-      return isNaN(harga) ? total : total + harga;
-    }, 0)
-  };
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      getUserData();
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [navigation]);
-  const [profile, setProfile] = useState("Belum Login");
-  const getUserData = () => {
-    getData("user").then((res) => {
-      const data = res;
-      if (data) {
-        setProfile(data);
-      } else {
-        // navigation.replace('Login');
-      }
-    });
-  };
 
   const [orderData, setOrderData] = useState([]);
   
@@ -212,7 +181,8 @@ const Orders = () => {
                       orderProducts: orderItem.products,
                       orderNumber: orderItem.orderNumber,
                       orderStatus: orderItem.status,
-                      orderId: orderItem.orderId
+                      orderId: orderItem.orderId,
+                      orderEvidence: orderItem.evidence
                     })} style={{ backgroundColor: "#82a9f4" }}>Order Details</Button>
                   </Box>
                 );
