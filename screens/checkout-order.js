@@ -65,10 +65,10 @@ const CheckoutOrder = ({ route }) => {
                 if (imageUri && Array.isArray(imageUri) && imageUri.length > 0) {
                     setUploading(true);
                     const uploadedImageUrls = await Promise.all(
-                      imageUri.map(async (item, index) => {
+                      imageUri.map(async (item) => {
                         try {
-                          const imageUrl = await uploadImage(item.uri, `image_${index}`);
-                          return imageUrl;                         
+                          const imageUrl = await uploadImage(item.uri);
+                          return imageUrl;
                         } catch (error) {
                           console.error('Error uploading image:', error);
                           return null;
@@ -127,14 +127,6 @@ const CheckoutOrder = ({ route }) => {
             return { ...prevOrderData, products: updatedProducts };
         });
     };
-    const renderItem = ({ item }) => (
-
-                <View>
-                    <Image alt="gambar" source={{ uri: item.uri }} style={{ width: 100, height: 100 }} />
-                </View>
-
-    );
-    
 
     return (
         <>
@@ -183,7 +175,11 @@ const CheckoutOrder = ({ route }) => {
                                     <View style={{ flex: 1 }}>
                                         <FlatList
                                         data={imageUri}
-                                        renderItem={renderItem}
+                                        renderItem={({ item }) => (
+                                            <View>
+                                              <Image alt="gambar" source={{ uri: item.uri }} style={{ width: 100, height: 100 }} />
+                                            </View>
+                                          )}
                                         keyExtractor={(item, index) => index.toString()}
                                         horizontal={true} 
                                         contentContainerStyle={{ paddingVertical: 20 }}
