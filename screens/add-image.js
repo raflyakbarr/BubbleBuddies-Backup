@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Text, TouchableOpacity, Image } from 'react-native';
-import { Box, HStack, Heading, ScrollView, View } from 'native-base';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { Box, HStack, Heading, ScrollView } from 'native-base';
 import { Camera } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
@@ -57,9 +57,9 @@ const AddImage = ({ navigation }) => {
                         <Ionicons name="md-radio-button-on-outline" size={60} color="white" />
                     </TouchableOpacity>
                 </View>
-                <ScrollView horizontal={true}>   
+                <View style={{ flexDirection: 'row', padding:5, }}>        
                 {renderPhotos()}
-                </ScrollView>   
+                </View>
              
             </Camera>
 
