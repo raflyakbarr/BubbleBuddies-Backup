@@ -1,9 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
-import { Box, Button, HStack, Heading, Image, ScrollView, Text, Modal } from "native-base";
+import { Box, Button, HStack, Heading, Image, Text, FlatList, Spinner } from "native-base";
 import React, { useState, useEffect } from "react";
 import { Header } from "../components";
-import { TouchableOpacity, ActivityIndicator, RefreshControl, Animated, useWindowDimensions  } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { getData } from "../src/utils/localStorage";
 import { getOrder } from "../src/actions/AuthAction";
 
@@ -11,9 +9,6 @@ const Orders = () => {
   const navigation = useNavigation();
   const [data, setData] = useState(null); // Data yang akan dimuat
   const [loading, setLoading] = useState(true); // Status loading
-  const [scrollY] = useState(new Animated.Value(0));
-  const window = useWindowDimensions();
-  const scrollContentHeight = 1000;
 
   const buttonStyle = {
     backgroundColor: 'transparent',
@@ -47,47 +42,14 @@ const Orders = () => {
     const fetchData = async () => {
       try {
         setData(orderData);
-        setLoading(false);
       } catch (error) {
         console.error('Data Tidak Ditemukan', error);
-        setLoading(false);
       }
     };
 
     fetchData();
   }, []);
 
-  const calculateTotalHarga = (order) => {
-    if (!order || !order.barang || order.barang.length === 0) {
-      return 0;
-    }
-
-    return order.barang.reduce((total, item) => {
-      const harga = parseFloat(item.harga);
-      return isNaN(harga) ? total : total + harga;
-    }, 0)
-  };
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
-      getUserData();
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [navigation]);
-  const [profile, setProfile] = useState("Belum Login");
-  const getUserData = () => {
-    getData("user").then((res) => {
-      const data = res;
-      if (data) {
-        setProfile(data);
-      } else {
-        // navigation.replace('Login');
-      }
-    });
-  };
 
   const [orderData, setOrderData] = useState([]);
   
@@ -103,6 +65,7 @@ const Orders = () => {
             ...orderData,
           }));
           setOrderData(orders);
+          setLoading(false);
         }
       } catch (error) {
         console.error('Error fetching order data:', error);
@@ -111,9 +74,7 @@ const Orders = () => {
   
     const interval = setInterval(() => {
       fetchOrderData();
-    }, 1000); // Misalnya, panggil setiap 5 detik
-  
-    // Membersihkan interval saat komponen tidak lagi digunakan
+    }, 1000); 
     return () => clearInterval(interval);
   }, []);
   const handleActiveButtonPress = () => {
@@ -134,21 +95,12 @@ const Orders = () => {
     handleActiveButtonPress();
   }, []);
   const [activeButtonStyle, setActiveButtonStyle] = useState(buttonStyle);
-  
   return (
     <>
-      <Box py={"4"} bg="#82a9f4">
-        <Animated.View  style={{
-          height: scrollY.interpolate({
-            inputRange: [scrollContentHeight - window.height, scrollContentHeight], // Sesuaikan dengan rentang yang diinginkan
-            outputRange: [200, 0], // Sesuaikan dengan tinggi header yang diinginkan
-            extrapolate: 'clamp',
-          }),
-        }} >
+      <Box py={"4"} bg="#82a9f4">    
         <Box mb={10}>
-        <Header scrollY={scrollY} withBack="true" title={"Orders"} />
+        <Header withBack="true" title={"Orders"} />
         </Box>
-        </Animated.View>
       </Box>
       <Box py={"5"} bg="#f6f6f6" w={"full"} borderRadius={"40"} top={"-40"} pt={"5"} pl={"10"} pr={"10"} pb={"5"}>
         <Box alignItems="flex-start" mt={5} ml={8}>
@@ -170,110 +122,118 @@ const Orders = () => {
         {showBox && (
       <Box>
         {loading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
+          <Spinner size="lg" color="#0000ff" />
         ) : (
-          <ScrollView marginBottom={350} showsVerticalScrollIndicator={false} >
-            {orderData
-              .filter((orderItem) => orderItem.status === 0)
-              .map((orderItem, orderIndex) => {
-                // Render for Active orders
-                switch (orderItem.service) {
-                  case 'Wash & Iron':
-                    serviceImage = require('../assets/washIron.png');
-                    break;
-                  case 'Wash':
-                    serviceImage = require('../assets/wash.png');
-                    break;
-                  case 'Ironing':
-                    serviceImage = require('../assets/iron.png');
-                    break;
-                  default:
-                    serviceImage = '';
-                    break;
-                }
-                return (
-                  <Box key={orderIndex} p={"3"} bgColor="white" borderRadius={"10"} shadow="2" marginBottom={5}>
-                    <HStack>
-                      <Image 
-                        source={serviceImage}
-                        alt="Alternate Text"
-                        size={"79"}
-                        mr={"1"}
-                      />
-                      <Heading p={"3"} fontSize={"20"} lineHeight={"25"}>
-                        Order #{orderItem.orderNumber}{"\n"}
-                        <Text fontSize={"15"} fontWeight={"500"}>{orderItem.date}{"\n"}</Text>
-                        <Text fontSize={"15"} fontWeight={"500"}>Rp {orderItem.total}</Text>
-                      </Heading>             
-                    </HStack>
-                    <Button onPress={() => navigation.navigate('DetailOrder', { 
-                      orderService: orderItem.service, 
-                      orderTotal: orderItem.total, 
-                      orderProducts: orderItem.products,
-                      orderNumber: orderItem.orderNumber,
-                      orderStatus: orderItem.status,
-                      orderId: orderItem.orderId
-                    })} style={{ backgroundColor: "#82a9f4" }}>Order Details</Button>
-                  </Box>
-                );
-              })}
-          </ScrollView>
+
+          <FlatList
+          data={orderData.filter((orderItem) => orderItem.status === 0)}
+          renderItem={({ item: orderItem, index: orderIndex }) => {
+            let serviceImage = '';
+
+            switch (orderItem.service) {
+              case 'Wash & Iron':
+                serviceImage = require('../assets/washIron.png');
+                break;
+              case 'Wash':
+                serviceImage = require('../assets/wash.png');
+                break;
+              case 'Ironing':
+                serviceImage = require('../assets/iron.png');
+                break;
+              default:
+                serviceImage = '';
+                break;
+            }
+
+            return (
+              <Box key={orderIndex} p={"3"} bgColor="white" borderRadius={"10"} shadow="2" marginBottom={5}>
+                <HStack>
+                  <Image 
+                    source={serviceImage}
+                    alt="Alternate Text"
+                    size={"79"}
+                    mr={"1"}
+                  />
+                  <Heading p={"3"} fontSize={"20"} lineHeight={"25"}>
+                    Order #{orderItem.orderNumber}{"\n"}
+                    <Text fontSize={"15"} fontWeight={"500"}>{orderItem.date}{"\n"}</Text>
+                    <Text fontSize={"15"} fontWeight={"500"}>Rp {orderItem.total}</Text>
+                  </Heading>             
+                </HStack>
+                <Button onPress={() => navigation.navigate('DetailOrder', { 
+                  orderService: orderItem.service, 
+                  orderTotal: orderItem.total, 
+                  orderProducts: orderItem.products,
+                  orderNumber: orderItem.orderNumber,
+                  orderStatus: orderItem.status,
+                  orderId: orderItem.orderId,
+                  orderEvidence: orderItem.evidence
+                })} style={{ backgroundColor: "#82a9f4" }}>Order Details</Button>
+              </Box>
+            );
+          }}
+          keyExtractor={(item, index) => index.toString()}
+          showsVerticalScrollIndicator={false}
+        />      
         )}
       </Box>
     )}
     {!showBox && (
       <Box>
         {loading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
+          <Spinner size="lg" color="#0000ff" />
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {orderData
-              .filter((orderItem) => orderItem.status === 1)
-              .map((orderItem, orderIndex) => {
-                let serviceImage = '';
+          <FlatList
+          data={orderData.filter((orderItem) => orderItem.status === 1)}
+          renderItem={({ item: orderItem, index: orderIndex }) => {
+            let serviceImage = '';
 
-                switch (orderItem.service) {
-                  case 'Wash & Iron':
-                    serviceImage = require('../assets/washIron.png');
-                    break;
-                  case 'Wash':
-                    serviceImage = require('../assets/wash.png');
-                    break;
-                  case 'Ironing':
-                    serviceImage = require('../assets/iron.png');
-                    break;
-                  default:
-                    serviceImage = '';
-                    break;
-                }
-                return (
-                  <Box key={orderIndex} p={"3"} bgColor="white" borderRadius={"10"} shadow="2" marginBottom={5}>
-                    <HStack>
-                      <Image 
-                        source={serviceImage}
-                        alt="Alternate Text"
-                        size={"79"}
-                        mr={"1"}
-                      />
-                      <Heading p={"3"} fontSize={"20"} lineHeight={"25"}>
-                        Order #{orderItem.orderNumber}{"\n"}
-                        <Text fontSize={"15"} fontWeight={"500"}>{orderItem.date}{"\n"}</Text>
-                        <Text fontSize={"15"} fontWeight={"500"}>Rp {orderItem.total}</Text>
-                      </Heading>             
-                    </HStack>
-                    <Button onPress={() => navigation.navigate('DetailOrder', { 
-                      orderService: orderItem.service, 
-                      orderTotal: orderItem.total, 
-                      orderProducts: orderItem.products,
-                      orderNumber: orderItem.orderNumber,
-                      orderStatus: orderItem.status,
-                      orderId: orderItem.orderId
-                    })} style={{ backgroundColor: "#82a9f4" }}>Order Details</Button>
-                  </Box>
-                );
-              })}
-          </ScrollView>
-        )}
+            switch (orderItem.service) {
+              case 'Wash & Iron':
+                serviceImage = require('../assets/washIron.png');
+                break;
+              case 'Wash':
+                serviceImage = require('../assets/wash.png');
+                break;
+              case 'Ironing':
+                serviceImage = require('../assets/iron.png');
+                break;
+              default:
+                serviceImage = '';
+                break;
+            }
+
+            return (
+              <Box key={orderIndex} p={"3"} bgColor="white" borderRadius={"10"} shadow="2" marginBottom={5}>
+                <HStack>
+                  <Image 
+                    source={serviceImage}
+                    alt="Alternate Text"
+                    size={"79"}
+                    mr={"1"}
+                  />
+                  <Heading p={"3"} fontSize={"20"} lineHeight={"25"}>
+                    Order #{orderItem.orderNumber}{"\n"}
+                    <Text fontSize={"15"} fontWeight={"500"}>{orderItem.date}{"\n"}</Text>
+                    <Text fontSize={"15"} fontWeight={"500"}>Rp {orderItem.total}</Text>
+                  </Heading>             
+                </HStack>
+                <Button onPress={() => navigation.navigate('DetailOrder', { 
+                  orderService: orderItem.service, 
+                  orderTotal: orderItem.total, 
+                  orderProducts: orderItem.products,
+                  orderNumber: orderItem.orderNumber,
+                  orderStatus: orderItem.status,
+                  orderId: orderItem.orderId,
+                  orderEvidence: orderItem.evidence
+                })} style={{ backgroundColor: "#82a9f4" }}>Order Details</Button>
+              </Box>
+            );
+          }}
+          keyExtractor={(item, index) => index.toString()}
+          showsVerticalScrollIndicator={false}
+        />
+        )}    
       </Box>
     )}
       </Box>

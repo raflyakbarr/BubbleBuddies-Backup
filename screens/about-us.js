@@ -3,8 +3,23 @@ import { Header } from "../components";''
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { TouchableOpacity } from "react-native"
 import {StatusBar} from "native-base";
+import MapView, { PROVIDER_GOOGLE }  from "react-native-maps";
 
-const AboutUs = ({ BubbleBuddies, Lorem}) => {
+const AboutUs = ({}) => {
+    const mapStyle = {
+        width: '100%',
+        height: '100%',
+    };
+    const ASPECT_RATIO = 400 / 600;
+    const LATITUDE_DELTA = 0.02;
+    const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+    const INITIAL_POSITION = {
+        latitude:-7.310478381225582,
+        longitude:112.72866367573715,
+        latitudeDelta: LATITUDE_DELTA,
+        longitudeDelta: LONGITUDE_DELTA,
+    }
+    
     return(
         <>
         <Header title ={"About Us"} withBack= "true">
@@ -30,8 +45,12 @@ const AboutUs = ({ BubbleBuddies, Lorem}) => {
                 Keamanan dan Kebersihan: Keamanan dan kebersihan adalah prioritas kami. Dengan protokol sanitasi yang ketat, Anda bisa merasa tenang menyerahkan cucian kepada kami.
                 Bergabunglah dengan BubbleBuddies Laundry dan nikmati pengalaman mencuci pakaian yang menyenangkan dan tanpa ribet. Kami hadir untuk memudahkan hidup Anda dengan menjaga kebersihan pakaian Anda. Terima kasih telah memilih BubbleBuddies Laundry sebagai mitra setia Anda.
                 </Text>
+                <Box padding={2} width={"full"} height={600} >
+                    <MapView style={mapStyle} provider={PROVIDER_GOOGLE} initialRegion={INITIAL_POSITION} />
+                </Box>
             </ScrollView>
         </Box>
+
         </>
     )
 }

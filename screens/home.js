@@ -1,4 +1,4 @@
-import { Heading, Box, ScrollView, Image, HStack, Text, FlatList } from "native-base";
+import { Heading, Box, ScrollView, Image, HStack, Text, FlatList, Spinner } from "native-base";
 import { useNavigation } from "@react-navigation/native";
 import { useState, useEffect, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons/";
@@ -75,6 +75,34 @@ const Home = () => {
     inputRange: [0, 100],
     outputRange: [1, 0.6],
     extrapolate: 'clamp',});
+
+    useEffect(() => {
+      const fetchWeather = async () => {
+        try {
+          const apiKey = 'cc05869ba4190997b71e9cedc0417f9d';
+          const kota = '1625822';
+          const apiUrl = `https://api.openweathermap.org/data/2.5/weather?id=${kota}&appid=${apiKey}`;
+  
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+  
+          if (response.ok) {
+            setWeatherData(data);
+          } else {
+            throw new Error('Failed to fetch weather data');
+          }
+          setLoading(false);
+        } catch (error) {
+          console.error('Error fetching weather data:', error);
+          setLoading(false);
+        }
+      };
+  
+      fetchWeather();
+    }, []);
+  const [weatherData, setWeatherData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   return (
     <>
       <SafeAreaView>
@@ -90,6 +118,20 @@ const Home = () => {
             >
               Welcome Back,{"\n"}{profile?.username}
             </Heading>
+            {/* <View>
+              {loading ? (
+                <Spinner size="large" color="#0000ff" />
+              ) : weatherData ? (
+                <Box>
+                  <Text>City: {weatherData.name}</Text>
+                  <Text>Temp: {weatherData.main.temp}</Text> */}
+                 
+{/*                 
+                </Box>
+              ) : (
+                <Text>No weather data available</Text>
+              )}
+            </View> */}
           </Box>      
                   
           <Box py={"7"} pb={"20"}>

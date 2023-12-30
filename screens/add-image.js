@@ -1,88 +1,77 @@
-import { useEffect, useRef, useState } from 'react';
-import { Box } from 'native-base';
-import { Text, Button, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { Box, HStack, Heading, ScrollView } from 'native-base';
 import { Camera } from 'expo-camera';
-import { shareAsync } from 'expo-sharing';
-import * as MediaLibrary from 'expo-media-library';
-import Header from '../components/header';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { Header } from '../components';
 
-const AddImage = () => {
-    const navigation = useNavigation();
+const AddImage = ({ navigation }) => {
     let cameraRef = useRef();
-    const [hasCameraPermission, setHasCameraPermission] = useState();
-    const [hasMediaLibraryPermission, setHasMediaLibraryPermission] = useState();
-    const [photo, setPhoto] = useState();
+    const [hasCameraPermission, setHasCameraPermission] = useState(null);
+    const [photos, setPhotos] = useState([]);
 
     useEffect(() => {
         (async () => {
-        const cameraPermission = await Camera.requestCameraPermissionsAsync();
-        const mediaLibraryPermission = await MediaLibrary.requestPermissionsAsync();
-        setHasCameraPermission(cameraPermission.status === "granted");
-        setHasMediaLibraryPermission(mediaLibraryPermission.status === "granted");
+            const { status } = await Camera.requestCameraPermissionsAsync();
+            setHasCameraPermission(status === 'granted');
         })();
     }, []);
 
-    if (hasCameraPermission === undefined) {
-        return <Text>Requesting permissions...</Text>
-    } else if (!hasCameraPermission) {
-        return <Text>Permission for camera not granted. Please change this in settings.</Text>
-    }
-
-    let takePic = async () => {
-        let options = {
-        quality: 1,
-        base64: true,
-        exif: false
-        };
-
-        let newPhoto = await cameraRef.current.takePictureAsync(options);
-        setPhoto(newPhoto);
+    const takePic = async () => {
+        if (cameraRef.current) {
+            let options = {
+                quality: 1,
+                base64: true,
+                exif: false
+            };
+    
+            const newPhoto = await cameraRef.current.takePictureAsync(options);
+            
+            setPhotos([...photos, newPhoto]); // Accumulate photos in the state
+        }
+    };
+    const handleSelect = () => {
+        navigation.navigate('CheckoutOrder', { photos }); // Kirim foto saja tanpa indeks produk terpilih
     };
 
-    if (photo) {
-        let savePhoto = () => {
-        MediaLibrary.saveToLibraryAsync(photo.uri).then(() => {
-            navigation.navigate('CheckoutOrder', { selectedPhoto: photo.uri });
-            console.log(photo.uri)
-            setPhoto(undefined);
-        });
-        };
+    const renderPhotos = () => {
+        return photos.map((photo, index) => (        
+                <Box key={index} backgroundColor={"white"} >
+                    <Image source={{ uri: photo.uri }} style={{ width: 100, height: 100 }} />
+                </Box>
+        ));
+    };
 
-        return (
-            <>
-            <Box bg={"#82a9f4"} h={"full"}>
-                <Header withBack="true" />
-                    <Image 
-                        style={{alignSelf: 'stretch', height: 500,}}
-                        source={{ uri: "data:image/jpg;base64," + photo.base64 }} 
-                    />
-                {hasMediaLibraryPermission ? 
-                <Button color={"white"} title="Save" onPress={savePhoto} /> : undefined}
-                <Button color={"white"} title="Discard" onPress={() => setPhoto(undefined)} />
-            </Box>
-            </>
-        );
+    if (hasCameraPermission === null) {
+        return <Text>Requesting permissions...</Text>;
+    } else if (hasCameraPermission === false) {
+        return <Text>Permission for camera not granted. Please change this in settings.</Text>;
     }
 
     return (
-        <>
-        <Box bg={"#82a9f4"}>
-            <Header withBack="true" title={"Add Image"} />
-            <Camera ref={cameraRef}>
-                <Box h={500}></Box>
-            </Camera>
-            <Box bg={"#82a9f4"} h={"full"} justifyContent={"space-between"} alignItems={"center"} >
-                <TouchableOpacity onPress={takePic}>
-                    <Box pt={10} justifyContent={"space-between"} alignContent={"center"}>
+        <View style={{ flex: 1 }}>
+            <Header withBack="true" title={"Add Image"}/>
+            <Camera style={{ flex: 1  }} ref={cameraRef}>
+                <View style={{ flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <TouchableOpacity onPress={takePic}>
                         <Ionicons name="md-radio-button-on-outline" size={60} color="white" />
+                    </TouchableOpacity>
+                </View>
+                <View style={{ flexDirection: 'row', padding:5, }}>        
+                {renderPhotos()}
+                </View>
+             
+            </Camera>
+
+            {photos.length > 0 && ( // Show select button if there are photos
+                <TouchableOpacity onPress={handleSelect}>
+                    <Box p={2} alignItems="center">
+                        <Text style={{ color: 'black' }}>Save</Text>
                     </Box>
                 </TouchableOpacity>
-            </Box> 
-        </Box>
-        </>
+            )}
+        </View>
     );
 };
 
-export default AddImage;
+export default AddImage;

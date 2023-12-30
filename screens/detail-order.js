@@ -10,7 +10,7 @@ import { MaterialCommunityIcons ,Feather } from '@expo/vector-icons';
 import { Alert } from 'react-native';
 
 const DetailOrder = ({ route }) => {
-  const { orderService, orderTotal, orderProducts, orderNumber, orderStatus, orderId } = route.params;
+  const { orderService, orderTotal, orderProducts, orderNumber, orderStatus, orderId, orderEvidence } = route.params;
   const [status, setStatus] = useState(orderStatus);
 
   const navigation = useNavigation();
@@ -18,9 +18,7 @@ const DetailOrder = ({ route }) => {
   const handleButtonPress = () => {
     // Navigasi ke halaman ListImage sambil membawa order number dan evidence
     navigation.navigate('ListImage', {
-      orderNumber: orderNumber,
-      orderId: orderId,
-      evidence: orderProducts.evidence
+      evidence: orderEvidence
     });
   };
 
