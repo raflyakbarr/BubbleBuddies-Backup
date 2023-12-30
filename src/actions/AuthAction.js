@@ -106,11 +106,11 @@ export const uploadImage = async (imageUri) => {
     const filename = imageUri.split('/').pop();
     const storageRef = FIREBASE.storage().ref();
     const imageRef = storageRef.child(`images/${filename}`);
-
     const uploadTaskSnapshot = await imageRef.put(blob, metadata);
     const downloadURL = await uploadTaskSnapshot.ref.getDownloadURL();
 
     return downloadURL;
+
   } catch (error) {
     console.error('Error uploading image:', error);
     throw error;

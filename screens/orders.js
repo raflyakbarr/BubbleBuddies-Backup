@@ -124,6 +124,7 @@ const Orders = () => {
         {loading ? (
           <Spinner size="lg" color="#0000ff" />
         ) : (
+
           <FlatList
           data={orderData.filter((orderItem) => orderItem.status === 0)}
           renderItem={({ item: orderItem, index: orderIndex }) => {

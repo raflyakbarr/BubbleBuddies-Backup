@@ -5,7 +5,6 @@ import { Header } from '../components';
 
 const ListImage = ({ route }) => {
   const { evidence: orderEvidence } = route.params;
-
   return (
     <>
       <Box bg="#82a9f4">
@@ -28,6 +27,7 @@ const ListImage = ({ route }) => {
                     ))
                   }  
       </ScrollView>
+    
     </>
   );
 };

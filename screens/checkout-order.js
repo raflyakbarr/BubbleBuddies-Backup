@@ -95,6 +95,7 @@ const CheckoutOrder = ({ route }) => {
                 orderData.orderNumber = orderNumber;
                 orderData.status = 0;
                 orderData.total = calculateTotal(validProducts); // Menggunakan calculateTotal untuk total produk yang valid   
+
                 await addOrder({ ...orderData, products: validProducts });
                 navigation.replace("SuccesOrder");
                 console.log({ ...orderData, products: validProducts });
@@ -106,7 +107,6 @@ const CheckoutOrder = ({ route }) => {
             Alert.alert('Error', 'Failed to send order data to Firebase');
         }
     };
-
 
     const handleIncrement = (productIndex) => {
         setOrderData((prevOrderData) => {
@@ -127,7 +127,6 @@ const CheckoutOrder = ({ route }) => {
             return { ...prevOrderData, products: updatedProducts };
         });
     };
-
     return (
         <>
             <SafeAreaView>
